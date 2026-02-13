@@ -2,7 +2,7 @@
   "name": "Vanguard Property Management",
   "short_name": "Vanguard PM",
   "description": "Professional Property Services & Maintenance Booking",
-  "start_url": "/vanguard-netlify.html",
+  "start_url": "/vanguard-booking/",
   "display": "standalone",
   "background_color": "#1a202c",
   "theme_color": "#d69e2e",
