@@ -1,0 +1,25 @@
+{
+  "name": "Vanguard Property Management",
+  "short_name": "Vanguard PM",
+  "description": "Professional Property Services & Maintenance Booking",
+  "start_url": "/vanguard-netlify.html",
+  "display": "standalone",
+  "background_color": "#1a202c",
+  "theme_color": "#d69e2e",
+  "orientation": "portrait-primary",
+  "categories": ["business", "productivity"],
+  "icons": [
+    {
+      "src": "https://raw.githubusercontent.com/pattoncorey4163-wq/vanguard-booking/main/vanguard-logo-clean.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "https://raw.githubusercontent.com/pattoncorey4163-wq/vanguard-booking/main/vanguard-logo-clean.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
