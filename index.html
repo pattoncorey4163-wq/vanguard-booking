@@ -4,6 +4,17 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vanguard Property Management - Book Online</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#d69e2e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Vanguard PM">
+    <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/pattoncorey4163-wq/vanguard-booking/main/vanguard-logo-clean.png">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+
     <style>
         * {
             margin: 0;
@@ -35,9 +46,9 @@
             border-bottom: 3px solid #d69e2e;
         }
 
-        .header h1 {
-            font-size: 2.5em;
-            margin-bottom: 10px;
+        .header img {
+            max-height: 80px;
+            margin-bottom: 15px;
         }
 
         .header p {
@@ -127,6 +138,12 @@
             transform: translateY(0);
         }
 
+        .submit-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+
         .service-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -153,9 +170,7 @@
             transform: scale(1.2);
         }
 
-        .success-message {
-            background: #38a169;
-            color: white;
+        .success-message, .error-message {
             padding: 20px;
             border-radius: 8px;
             margin-bottom: 20px;
@@ -163,14 +178,41 @@
             display: none;
         }
 
+        .success-message {
+            background: #38a169;
+            color: white;
+        }
+
         .error-message {
             background: #e53e3e;
             color: white;
-            padding: 20px;
+        }
+
+        .install-prompt {
+            background: linear-gradient(135deg, #38a169 0%, #2f855a 100%);
+            color: white;
+            padding: 15px 20px;
             border-radius: 8px;
             margin-bottom: 20px;
             text-align: center;
             display: none;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .install-btn {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 8px 16px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .install-btn:hover {
+            background: rgba(255,255,255,0.3);
         }
 
         @media (max-width: 600px) {
@@ -190,24 +232,33 @@
             .form-container {
                 padding: 20px;
             }
+
+            .install-prompt {
+                flex-direction: column;
+                gap: 10px;
+            }
         }
     </style>
 </head>
 <body>
     <div class="container">
         <div class="header">
-            <h1>Vanguard Property Management</h1>
+            <img src="https://raw.githubusercontent.com/pattoncorey4163-wq/vanguard-booking/main/vanguard-logo-clean.png" alt="Vanguard Property Management">
             <p>Professional Property Services & Maintenance</p>
         </div>
 
         <div class="form-container">
+            <div class="install-prompt" id="installPrompt">
+                <span>📱 Install Vanguard PM app for faster booking!</span>
+                <button class="install-btn" id="installBtn">Install App</button>
+            </div>
+            
             <div class="success-message" id="successMessage">
-                🎉 Thank you! Your booking request is being prepared. 
-                Your email client will open with all the details pre-filled - just hit send!
+                🎉 Thank you! Your booking request has been submitted successfully.
             </div>
             
             <div class="error-message" id="errorMessage">
-                ❌ There was an error preparing your request. Please try again.
+                ❌ There was an error submitting your request. Please try again.
             </div>
 
             <form id="bookingForm">
@@ -233,9 +284,15 @@
                     </div>
                 </div>
 
-                <div class="form-group">
-                    <label for="property">Property Address/Description <span class="required">*</span></label>
-                    <textarea id="property" name="property" placeholder="Enter the full property address and any specific location details..." required></textarea>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="property">Property Name/Complex <span class="required">*</span></label>
+                        <input type="text" id="property" name="property" placeholder="e.g. Vue at Rocket City, Maple Ridge Apartments..." required>
+                    </div>
+                    <div class="form-group">
+                        <label for="apartment">Apartment/Unit Number</label>
+                        <input type="text" id="apartment" name="apartment" placeholder="e.g. Apt 101, Unit B-5">
+                    </div>
                 </div>
 
                 <div class="form-group">
@@ -305,60 +362,153 @@
     </div>
 
     <script>
-        document.getElementById('bookingForm').addEventListener('submit', function(e) {
+        // PWA Service Worker Registration
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('sw.js')
+                    .then(registration => {
+                        console.log('SW registered: ', registration);
+                    })
+                    .catch(registrationError => {
+                        console.log('SW registration failed: ', registrationError);
+                    });
+            });
+        }
+
+        // PWA Install Prompt
+        let deferredPrompt;
+        const installPrompt = document.getElementById('installPrompt');
+        const installBtn = document.getElementById('installBtn');
+
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installPrompt.style.display = 'flex';
+        });
+
+        installBtn.addEventListener('click', (e) => {
+            installPrompt.style.display = 'none';
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then((choiceResult) => {
+                console.log(choiceResult.outcome === 'accepted' ? 'User accepted install' : 'User dismissed install');
+                deferredPrompt = null;
+            });
+        });
+
+        window.addEventListener('appinstalled', (evt) => {
+            console.log('App was installed');
+            installPrompt.style.display = 'none';
+        });
+
+        // Form submission
+        document.getElementById('bookingForm').addEventListener('submit', async function(e) {
             e.preventDefault();
             
+            const submitBtn = this.querySelector('.submit-btn');
+            const originalText = submitBtn.textContent;
+            submitBtn.disabled = true;
+            submitBtn.textContent = '⏳ Submitting...';
+            
             try {
-                // Get form data
                 const formData = new FormData(this);
                 const services = [];
                 const checkboxes = document.querySelectorAll('input[name="services"]:checked');
                 checkboxes.forEach(cb => services.push(cb.value));
                 
-                // Create email body
-                const emailBody = `
-VANGUARD PROPERTY MANAGEMENT - NEW BOOKING REQUEST
-
-Customer Information:
-- Name: ${formData.get('firstName')} ${formData.get('lastName')}
-- Email: ${formData.get('email')}
-- Phone: ${formData.get('phone')}
-
-Property Details:
-- Address: ${formData.get('property')}
-- PO Number: ${formData.get('poNumber') || 'N/A'}
-
-Service Request:
-- Services: ${services.join(', ') || 'None selected'}
-- Preferred Date: ${formData.get('preferredDate')}
-- Additional Details: ${formData.get('description') || 'None provided'}
-
-Submitted: ${new Date().toLocaleString()}
-Reference: VPM-${Date.now().toString().slice(-6)}
-                `.trim();
-
-                // Create mailto link
-                const subject = encodeURIComponent(`Booking Request - ${formData.get('firstName')} ${formData.get('lastName')}`);
-                const body = encodeURIComponent(emailBody);
-                const mailtoLink = `mailto:pattoncorey4163@gmail.com?subject=${subject}&body=${body}`;
+                const bookingData = {
+                    name: `${formData.get('firstName')} ${formData.get('lastName')}`,
+                    firstName: formData.get('firstName'),
+                    lastName: formData.get('lastName'),
+                    email: formData.get('email'),
+                    phone: formData.get('phone'),
+                    propertyName: formData.get('property'),
+                    apartmentNumber: formData.get('apartment') || '',
+                    poNumber: formData.get('poNumber') || '',
+                    service: services.length > 0 ? services.join(', ') : 'General Service',
+                    selectedDate: formData.get('preferredDate'),
+                    specialRequests: formData.get('description') || '',
+                    additionalRequests: '',
+                    preferredContact: 'email',
+                    bedrooms: 1,
+                    status: 'occupied',
+                    duration: 'single',
+                    urgency: 'standard',
+                    submittedAt: new Date().toISOString()
+                };
                 
-                // Open email client
-                window.location.href = mailtoLink;
+                // Multiple submission endpoints for reliability
+                const endpoints = [
+                    'https://redeem-narrative-combat-forest.trycloudflare.com/api/submit-booking',
+                    // Add Formspree as backup
+                    'https://formspree.io/f/pattoncorey4163@gmail.com'
+                ];
                 
-                // Show success message
-                document.getElementById('successMessage').style.display = 'block';
-                document.getElementById('errorMessage').style.display = 'none';
+                let success = false;
+                let referenceId = null;
                 
-                // Reset form after delay
-                setTimeout(() => {
+                // Try primary endpoint first
+                try {
+                    const response = await fetch(endpoints[0], {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(bookingData)
+                    });
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        if (result.success) {
+                            success = true;
+                            referenceId = result.referenceId;
+                        }
+                    }
+                } catch (err) {
+                    console.log('Primary endpoint failed, trying backup...');
+                }
+                
+                // Try backup endpoint if primary failed
+                if (!success) {
+                    try {
+                        const formDataBackup = new FormData();
+                        formDataBackup.append('message', JSON.stringify(bookingData, null, 2));
+                        
+                        const response = await fetch(endpoints[1], {
+                            method: 'POST',
+                            body: formDataBackup
+                        });
+                        
+                        if (response.ok) {
+                            success = true;
+                            referenceId = `VPM-${Date.now().toString().slice(-6)}`;
+                        }
+                    } catch (err) {
+                        console.log('Backup endpoint also failed');
+                    }
+                }
+                
+                if (success) {
+                    document.getElementById('successMessage').innerHTML = `
+                        🎉 Thank you! Your booking request has been submitted successfully.<br>
+                        ${referenceId ? `<strong>Reference ID: ${referenceId}</strong><br>` : ''}
+                        We'll contact you within 24 hours to confirm your appointment.
+                    `;
+                    document.getElementById('successMessage').style.display = 'block';
+                    document.getElementById('errorMessage').style.display = 'none';
                     this.reset();
-                    document.getElementById('successMessage').style.display = 'none';
-                }, 5000);
+                } else {
+                    throw new Error('All submission endpoints failed');
+                }
                 
             } catch (error) {
                 console.error('Error:', error);
+                document.getElementById('errorMessage').innerHTML = `
+                    ❌ There was an error submitting your request.<br>
+                    Please try again or contact us directly at <strong>pattoncorey4163@gmail.com</strong>
+                `;
                 document.getElementById('errorMessage').style.display = 'block';
                 document.getElementById('successMessage').style.display = 'none';
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.textContent = originalText;
             }
         });
 
