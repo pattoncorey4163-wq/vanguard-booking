@@ -1,7 +1,8 @@
 const CACHE_NAME = 'vanguard-pm-v1';
 const urlsToCache = [
-  '/vanguard-netlify.html',
-  '/manifest.json',
+  '/vanguard-booking/',
+  '/vanguard-booking/manifest.json',
+  '/vanguard-booking/sw.js',
   'https://raw.githubusercontent.com/pattoncorey4163-wq/vanguard-booking/main/vanguard-logo-clean.png'
 ];
 
@@ -56,7 +57,7 @@ self.addEventListener('push', event => {
       badge: 'https://raw.githubusercontent.com/pattoncorey4163-wq/vanguard-booking/main/vanguard-logo-clean.png',
       vibrate: [100, 50, 100],
       data: {
-        url: data.url || '/vanguard-netlify.html'
+        url: data.url || '/vanguard-booking/'
       },
       actions: [
         {
